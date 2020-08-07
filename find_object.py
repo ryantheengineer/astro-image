@@ -65,23 +65,65 @@ def findDSO(init_coord, obj_coord, RAcalR, RAcalL, DECcal):
     inputs to get the desired DSO in frame.
 
     Args:
-        init_coord:
+        init_coord: Tuple coordinates (RA, DEC) of the initial position
 
-        obj_coord:
+        obj_coord: Tuple coordinates (RA, DEC) of the desired position
 
-        RAcalR:
+        RAcalR: Calibration value for pressing the right RA button (deg/sec)
 
-        RAcalL:
+        RAcalL: Calibration value for pressing the left RA button (deg/sec)
 
-        DECcal:
+        DECcal: Calibration value for turning the DEC knob (unitless, deg/deg)
 
     Returns:
         A string describing the necessary RA and DEC adjustments.
 
     """
+    # Set meridian_threshold, the angle at which a warning message will display
+    meridian_threshold = 90.0
 
+    # Get the required coordinate change in RA coordinate
+    RAchange = obj_coord[0] - init_coord[0]
 
+    # Get the required coordinate change in DEC coordinate. Change DECchange so
+    # it requires 180 degrees rotation or less to achieve
+    DECchange = obj_coord[1] - init_coord[0]
 
+    if DECchange > 180.0:
+        DECchange = 180.0 - DECchange
+
+    # Print the RA and DEC change values in degrees for context and debugging
+    print("\nRA change = {} deg".format(RAchange))
+    print("DEC change = {} deg\n".format(DECchange))
+
+    # Print a warning if the required RA change is greater than
+    # meridian_threshold
+    if np.abs(RAchange) > meridian_threshold:
+        print("\n[WARNING]: REQUIRED RA CHANGE MAY REQUIRE MERIDIAN FLIP")
+
+    # Convert the RA change from degrees to seconds of button press, using the
+    # appropriate button calibration
+    if RAchange < 0:
+        RAchange = np.abs(RAchange)
+        RApress = RAcalL * RAchange
+        RAdirection = "LEFT"
+
+    else:
+        RApress = RAcalR * RAchange
+        RAdirection = "RIGHT"
+
+    # Convert the DEC change from celestial degrees to degrees of DEC knob turn
+    DECknob = DECcal * DECchange
+
+    # NOTE: HERE THE DECKNOB CALCULATION SHOULD BE RECALCULATED TO COUNT THE
+    # FULL TURNS INHERENT IN THE MOVE, SO IT WOULD OUTPUT SOMETHING LIKE "3
+    # TURNS CLOCKWISE AND 45 DEGREES"
+
+    # Build the instruction strings and print them out
+    RAinstruction = "\nPress the {} RA button for {} seconds".format(RAdirection, RApress)
+    DECinstruction = "\nTurn the DEC knob by {} degrees".format(DECknob)
+    print(RAinstruction)
+    print(DECinstruction)
 
 
 def main():
